@@ -73,12 +73,21 @@ def getContent(url):
 
 
         i=i+2 #在第一页中已获得第一页第二页的图片的网址，可以直接跳转到第三页
-        url = urlhead+str(i)+r'.html?s=13' # http://www.hheess.com//page86555/+ i+ .html?s=13
         try:
             r=requests.get(url)   #若能访问，则继续运行
             rcode = r.status_code
+            #不存在的网页页可以被访问 http://www.hheess.com//page86555/+ 999+ .html?s=13
+            content=r.content.decode(encoding='utf-8')
+            a= re.search('\d+</a> 页',content).group()
+            a= re.search('\d+</a> 页',a).group()
+            a=a.strip('</a> 页')
+            a=int(a)
+            if i>a:
+                rcode = 0
+            else:
         except:
             rcode = 0  #若新构造的页面无法访问，则赋值0，退出while循环
+            print('rcode is in except')
 
 if __name__ == '__main__':
     mkpath= input('please input the storage path \n')
