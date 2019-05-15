@@ -84,7 +84,6 @@ def getContent(url):
             a=int(a)
             if i>a:
                 rcode = 0
-            else:
         except:
             rcode = 0  #若新构造的页面无法访问，则赋值0，退出while循环
             print('rcode is in except')
