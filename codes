@@ -74,15 +74,17 @@ def getContent(url):
 
         i=i+2 #在第一页中已获得第一页第二页的图片的网址，可以直接跳转到第三页
         url = urlhead+str(i)+r'.html?s=13' # http://www.hheess.com//page86555/+ i+ .html?s=13
-        r=requests.get(url) #获取第一网页访问是否正常
-        rcode = r.status_code
+        try:
+            r=requests.get(url)   #若能访问，则继续运行
+            rcode = r.status_code
+        except:
+            rcode = 0  #若新构造的页面无法访问，则赋值0，退出while循环
 
 if __name__ == '__main__':
-    mkpath= input(prompt='please input the storage path \n')
+    mkpath= input('please input the storage path \n')
     mkdir(mkpath)
     os.chdir(mkpath) 
-    mainurl = input(prompt='please input the mainpage url \n')
+    mainurl = input('please input the mainpage url \n')
     chapterurl = getChapterURL(mainurl) #获取章节目录
     for chpt in chapterurl[::-1]: #第一个元素为最新的一章，从第一章开始下载
         getContent(chpt)
-
