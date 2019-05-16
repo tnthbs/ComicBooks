@@ -2,6 +2,7 @@ import requests
 import os
 from lxml import etree
 import time,random
+import re
 
 #import time
 def getChapterURL(mainURL):
@@ -40,8 +41,7 @@ def getContent(url,startpage):
     urlhead = re.search(r'http\S+/',url).group() #为构造下次循环网址准备 http://www.hheess.com//page86555/1.html?s=13 >
     #获得 http://www.hheess.com//page86555/
     url = urlhead+str(i)+r'.html?s=13' # http://www.hheess.com//page86555/+ i+ .html?s=13  构造start page
-        
-    
+
     r=requests.get(url) #获取第一次网页访问是否正常
     rcode = r.status_code
     
@@ -99,12 +99,14 @@ def getContent(url,startpage):
             
 def writelog(url):
     log='log.txt'
-    with open (log,'w+') as writefile:
+    with open (log,'w+',encoding='UTF-8') as writefile: #未指定编码方式时，保存和读取会出错。。。
         writefile.write(url)
+
+
 
 def checklog():
     try:#若文件不存在时，不会报错
-        with open ('log.txt') as log:
+        with open ('log.txt',encoding='UTF-8') as log:  #未指定编码方式时，保存和读取会出错。。。
             logurl = log.readline()
             currentpage = re.search('/(\d+).html',logurl).groups()  #此时为元祖 （'11'）
             currentchpt = logurl.replace(currentpage[0]+'.html?s=13','1.html?s=13') #元组的第一个元素才能被re 表示式接收
@@ -114,18 +116,19 @@ def checklog():
             currentpage = ''
             currentchpt = ''
     return currentchpt,currentpage
-        
+   
 
 if __name__ == '__main__':
-    mkpath= input('please input the storage path \n')
-    #mkpath = r'F:\cb_new'
+    #mkpath= input('please input the storage path \n')
+    mkpath = r'F:\cb_new'
     mkdir(mkpath)
     os.chdir(mkpath) 
-    mainurl = input('please input the mainpage url \n')
-    #mainurl = r'http://www.hheess.com/manhua8612.html'
+    #mainurl = input('please input the mainpage url \n')
+    mainurl = r'http://www.hheess.com/manhua8612.html'
     chapterurl = getChapterURL(mainurl) #获取章节目录
     currentchpt,currentpage=checklog()
-    
+
+
     if currentchpt !='': #如果已有下载记录
         getContent(currentchpt,currentpage) #从当前未下载完成的继续至下完本章节
         for chpt in chapterurl[:chapterurl.index(currentchpt):-1]: 
@@ -137,4 +140,3 @@ if __name__ == '__main__':
     else:  #如果没有文件或没有下载记录，从第一章开始下
         for chpt in chapterurl[::-1]: #第一个元素为最新的一章，从第一章开始下载
             getContent(chpt,1)
-    
