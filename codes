@@ -119,12 +119,12 @@ def checklog():
    
 
 if __name__ == '__main__':
-    #mkpath= input('please input the storage path \n')
-    mkpath = r'F:\cb_new'
+    mkpath= input('please input the storage path \n')
+    #mkpath = r'F:\cb_new'
     mkdir(mkpath)
     os.chdir(mkpath) 
-    #mainurl = input('please input the mainpage url \n')
-    mainurl = r'http://www.hheess.com/manhua8612.html'
+    mainurl = input('please input the mainpage url \n')
+    #mainurl = r'http://www.hheess.com/manhua8612.html'
     chapterurl = getChapterURL(mainurl) #获取章节目录
     currentchpt,currentpage=checklog()
 
