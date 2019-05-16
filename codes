@@ -131,6 +131,10 @@ if __name__ == '__main__':
 
     if currentchpt !='': #如果已有下载记录
         getContent(currentchpt,currentpage) #从当前未下载完成的继续至下完本章节
+        #此时currentchpt 会带有BOM 头
+        if '\ufeff' in currentchpt:
+            currentchpt = currentpage.replace('\ufeff','')
+            
         for chpt in chapterurl[:chapterurl.index(currentchpt):-1]: 
             #继续下载剩余章节,当前章节及当前之前的章节不再下载
             #如正在下载vol1,则是 chpapterurl[:-1:-1],从倒数第二章节（chpt2）继续下载
