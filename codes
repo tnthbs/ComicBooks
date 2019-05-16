@@ -38,7 +38,10 @@ def getContent(url,startpage):
     i=startpage
     urlhead = re.search(r'http\S+/',url).group() #为构造下次循环网址准备 http://www.hheess.com//page86555/1.html?s=13 >
     #获得 http://www.hheess.com//page86555/
-    r=requests.get(url) #获取第一网页访问是否正常
+    
+    url = urlhead+str(i)+r'.html?s=13' # http://www.hheess.com//page86555/+ i+ .html?s=13  构造start page
+    
+    r=requests.get(url) #获取第一次网页访问是否正常
     rcode = r.status_code
     
     while rcode == 200: #若返回值为200代表网页正常
@@ -53,6 +56,8 @@ def getContent(url,startpage):
         except requests.exceptions.ConnectionError:
             print('当前章节已下载完毕或无法访问')
         #'''下载当前页及下一页'''
+        
+         
         for eachurl in picurl[::-1]:
             chptname = re.search('vol_\d+',eachurl).group()
             picname = re.search('-(\d+)',eachurl).group()
@@ -99,23 +104,29 @@ def writelog(url):
 def checklog():
     try:#若文件不存在时，不会报错
         with open ('log.txt') as log:
-            logurl = log.readline
-            currentpage = re.search('/(\d+).html',logurl).groups()  
-            currentchpt = re.sub(currentpage[0],'1',logurl) 
+            logurl = log.readline()
+            currentpage = re.search('/(\d+).html',logurl).groups()  #此时为元祖 （'11'）
+            currentchpt = logurl.replace(currentpage[0]+'.html?s=13','1.html?s=13') #元组的第一个元素才能被re 表示式接收
+            currentpage = int(currentpage[0]) #整形为int，后面需要运算i+2
             #currenpage 搜出来结果是tuple，tuple第一个元素str才能被sub
+
     except:
             currentpage = ''
             currentchpt = ''
-    return currentchpt,int(currentpage)
+
+    return currentchpt,currentpage
         
 
 if __name__ == '__main__':
-    mkpath= input('please input the storage path \n')
+    #mkpath= input('please input the storage path \n')
+    mkpath = r'F:\cb_new'
     mkdir(mkpath)
     os.chdir(mkpath) 
-    mainurl = input('please input the mainpage url \n')
+    #mainurl = input('please input the mainpage url \n')
+    mainurl = r'http://www.hheess.com/manhua8612.html'
     chapterurl = getChapterURL(mainurl) #获取章节目录
     currentchpt,currentpage=checklog()
+
     if currentchpt !='': #如果已有下载记录
         getContent(currentchpt,currentpage) #从当前未下载完成的继续至下完本章节
         for chpt in chapterurl[:chapterurl.index(currentchpt):-1]: 
@@ -126,4 +137,5 @@ if __name__ == '__main__':
             getContent(currentchpt,currentpage)
     else:  #如果没有文件或没有下载记录，从第一章开始下
         for chpt in chapterurl[::-1]: #第一个元素为最新的一章，从第一章开始下载
-        getContent(chpt)
+            getContent(chpt,1)
+    
