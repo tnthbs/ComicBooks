@@ -48,7 +48,13 @@ def getContent(url,startpage):
     while rcode == 200: #若返回值为200代表网页正常
         try:
             #'''第一次访问第一页，'''
-            driver = webdriver.Chrome()#网页含有js脚本，只能通过selenium 访问
+            '''update headless'''
+            chrome_options = webdriver.ChromeOptions()
+            chrome_options.add_argument('--headless')
+            #实例化Chrome driver
+            driver=webdriver.Chrome(options=chrome_options)
+            #driver = webdriver.Chrome()#网页含有js脚本，只能通过selenium 访问
+            '''update headless'''
             driver.get(url)
             source = driver.page_source #获取
             picurl = re.findall('http://\S+.JPG',source) #匹配结果会得到两个，第一个为下一页网址，第二个为本页网址
