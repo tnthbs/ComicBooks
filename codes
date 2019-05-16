@@ -52,10 +52,11 @@ def getContent(url,startpage):
             driver.get(url)
             source = driver.page_source #获取
             picurl = re.findall('http://\S+.JPG',source) #匹配结果会得到两个，第一个为下一页网址，第二个为本页网址
+            maxpage = re.search('(\d+)</b>',source).groups()[0] #获取最大页码数
             driver.close()
             # or //*[@id="iBody"]/div[1]
         except requests.exceptions.ConnectionError:
-            print('当前章节已下载完毕或无法访问')
+            print('First 当前章节已下载完毕或无法访问')
         #'''下载当前页及下一页'''
         
          
@@ -74,7 +75,7 @@ def getContent(url,startpage):
             fp = open(file_name,'wb')
             fp.write(pic.content) #写入图片
             fp.close()
-            time.sleep(random.uniform(0.5, 3))#下完一章图片后随机睡眠，防爬虫
+            time.sleep(random.uniform(0.1, 2))#下完一章图片后随机睡眠，防爬虫
 
         
         i=i+2 #在第一页中已获得第一页第二页的图片的网址，可以直接跳转到第三页
@@ -86,16 +87,11 @@ def getContent(url,startpage):
             r=requests.get(url)   #若能访问，则继续运行
             rcode = r.status_code
             #不存在的网页页可以被访问 http://www.hheess.com//page86555/+ 999+ .html?s=13
-            content=r.content.decode(encoding='utf-8')
-            a= re.search('\d+</a> 页',content).group()
-            a= re.search('\d+</a> 页',a).group()
-            a=a.strip('</a> 页')
-            a=int(a)
-            if i>a:
-                rcode = 0
-        except:
+            if i>int(maxpage):
+                rcode = 0                          
+        except :
             rcode = 0  #若新构造的页面无法访问，则赋值0，退出while循环
-            print('当前章节已下载完毕或无法访问')
+            print('second当前章节已下载完毕或无法访问')
             
 def writelog(url):
     log='log.txt'
@@ -120,7 +116,7 @@ def checklog():
 
 if __name__ == '__main__':
     mkpath= input('please input the storage path \n')
-    #mkpath = r'F:\cb_new'
+    #mkpath = r'F:\python_test'
     mkdir(mkpath)
     os.chdir(mkpath) 
     mainurl = input('please input the mainpage url \n')
@@ -129,15 +125,18 @@ if __name__ == '__main__':
     currentchpt,currentpage=checklog()
 
 
+
     if currentchpt !='': #如果已有下载记录
-        getContent(currentchpt,currentpage) #从当前未下载完成的继续至下完本章节
+        getContent(currentchpt,currentpage) #从当前未下载完成的继续至下完本章节   
         #此时currentchpt 会带有BOM 头
         if '\ufeff' in currentchpt:
             currentchpt = currentpage.replace('\ufeff','')
+        if '&d=0' in currentchpt:
+            currentchpt = currentchpt.replace('&d=0','') #访问过程会网址会加入&d=0后缀，和章节列表无法匹配
             
-        for chpt in chapterurl[:chapterurl.index(currentchpt):-1]: 
+        for chpt in chapterurl[chapterurl.index(currentchpt)-1::-1]: 
             #继续下载剩余章节,当前章节及当前之前的章节不再下载
-            #如正在下载vol1,则是 chpapterurl[:-1:-1],从倒数第二章节（chpt2）继续下载
+            #如正在下载vol_1,则是 chpapterurl[-1-1::-1],从倒数第二章节（chpt2）继续下载
             currentchpt = chpt
             currentpage = 1
             getContent(currentchpt,currentpage)
