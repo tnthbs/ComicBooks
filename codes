@@ -32,10 +32,10 @@ def mkdir(path):
         print(path+' 目录已存在')
         return False
 
-def getContent(url):
+def getContent(url,startpage):
     from selenium import webdriver
     import re
-    i=1
+    i=startpage
     urlhead = re.search(r'http\S+/',url).group() #为构造下次循环网址准备 http://www.hheess.com//page86555/1.html?s=13 >
     #获得 http://www.hheess.com//page86555/
     r=requests.get(url) #获取第一网页访问是否正常
@@ -52,7 +52,6 @@ def getContent(url):
             # or //*[@id="iBody"]/div[1]
         except requests.exceptions.ConnectionError:
             print('当前章节已下载完毕或无法访问')
-           
         #'''下载当前页及下一页'''
         for eachurl in picurl[::-1]:
             chptname = re.search('vol_\d+',eachurl).group()
@@ -71,9 +70,12 @@ def getContent(url):
             fp.close()
             time.sleep(random.uniform(0.5, 3))#下完一章图片后随机睡眠，防爬虫
 
-
+        
         i=i+2 #在第一页中已获得第一页第二页的图片的网址，可以直接跳转到第三页
+        writelog(url) #save current processing url
+        
         url = urlhead+str(i)+r'.html?s=13' # http://www.hheess.com//page86555/+ i+ .html?s=13
+        
         try:
             r=requests.get(url)   #若能访问，则继续运行
             rcode = r.status_code
@@ -88,6 +90,24 @@ def getContent(url):
         except:
             rcode = 0  #若新构造的页面无法访问，则赋值0，退出while循环
             print('rcode is in except')
+            
+def writelog(url):
+    log='log.txt'
+    with open (log,'w+') as writefile:
+        writefile.write(url)
+
+def checklog():
+    try:#若文件不存在时，不会报错
+        with open ('log.txt') as log:
+            logurl = log.readline
+            currentpage = re.search('/(\d+).html',logurl).groups()  
+            currentchpt = re.sub(currentpage[0],'1',logurl) 
+            #currenpage 搜出来结果是tuple，tuple第一个元素str才能被sub
+    except:
+            currentpage = ''
+            currentchpt = ''
+    return currentchpt,int(currentpage)
+        
 
 if __name__ == '__main__':
     mkpath= input('please input the storage path \n')
@@ -95,5 +115,14 @@ if __name__ == '__main__':
     os.chdir(mkpath) 
     mainurl = input('please input the mainpage url \n')
     chapterurl = getChapterURL(mainurl) #获取章节目录
-    for chpt in chapterurl[::-1]: #第一个元素为最新的一章，从第一章开始下载
+    currentchpt,currentpage=checklog()
+    if currentchpt !='': #如果已有下载记录
+        getContent(currentchpt,currentpage) #从当前未下载完成的继续至下完本章节
+        for chpt in chapterurl[:chapterurl.index(currentchpt):-1]: 
+            #继续下载剩余章节,当前章节及当前之前的章节不再下载
+            currentchpt = chpt
+            currentpage = 1
+            getContent(currentchpt,currentpage)
+    else:  #如果没有文件或没有下载记录，从第一章开始下
+        for chpt in chapterurl[::-1]: #第一个元素为最新的一章，从第一章开始下载
         getContent(chpt)
