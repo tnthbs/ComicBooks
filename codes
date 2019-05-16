@@ -89,7 +89,7 @@ def getContent(url,startpage):
                 rcode = 0
         except:
             rcode = 0  #若新构造的页面无法访问，则赋值0，退出while循环
-            print('rcode is in except')
+            print('当前章节已下载完毕或无法访问')
             
 def writelog(url):
     log='log.txt'
