@@ -42,6 +42,7 @@ def getContent(url,startpage):
     #获得 http://www.hheess.com//page86555/
     url = urlhead+str(i)+r'.html?s=13' # http://www.hheess.com//page86555/+ i+ .html?s=13  构造start page
 
+    
     r=requests.get(url) #获取第一次网页访问是否正常
     rcode = r.status_code
     
@@ -62,10 +63,10 @@ def getContent(url,startpage):
             driver.close()
             # or //*[@id="iBody"]/div[1]
         except requests.exceptions.ConnectionError:
-            print('First 当前章节已下载完毕或无法访问')
-        #'''下载当前页及下一页'''
-        
-         
+            print('当前章节无法访问或出错')
+
+            
+        #'''下载当前页及下一页'''             
         for eachurl in picurl[::-1]:
             chptname = re.search('vol_\d+',eachurl).group()
             picname = re.search('-(\d+)',eachurl).group()
@@ -75,29 +76,29 @@ def getContent(url,startpage):
             try:
                 pic = requests.get(eachurl)  
             except requests.exceptions.ConnectionError:
-                print('当前图片无法下载')
+                print('图片无法下载')
 
             #将图片存入本地
             fp = open(file_name,'wb')
             fp.write(pic.content) #写入图片
             fp.close()
-            time.sleep(random.uniform(0.1, 2))#下完一章图片后随机睡眠，防爬虫
+            time.sleep(random.uniform(0.1, 2))#下完一章图片后随机睡眠，防爬虫           
 
         
-        i=i+2 #在第一页中已获得第一页第二页的图片的网址，可以直接跳转到第三页
-        writelog(url) #save current processing url
-        
-        url = urlhead+str(i)+r'.html?s=13' # http://www.hheess.com//page86555/+ i+ .html?s=13
+        i=i+2 #在第一页中已获得第一页第二页的图片的网址，可以直接跳转到第三页        
+        url = urlhead+str(i)+r'.html?s=13' # 构造下一页网址 http://www.hheess.com//page86555/+ i+ .html?s=13
+        writelog(url) #save next url needed processed
         
         try:
             r=requests.get(url)   #若能访问，则继续运行
             rcode = r.status_code
             #不存在的网页页可以被访问 http://www.hheess.com//page86555/+ 999+ .html?s=13
-            if i>int(maxpage):
-                rcode = 0                          
-        except :
+            if i>int(maxpage): #如果构造的页面超过章节的最大页数，赋值rcode=0，停止循环
+                rcode = 0     
+                print('当前章节已下载完毕')
+        except Exception as e:
             rcode = 0  #若新构造的页面无法访问，则赋值0，退出while循环
-            print('second当前章节已下载完毕或无法访问')
+            print(e)
             
 def writelog(url):
     log='log.txt'
@@ -115,6 +116,7 @@ def checklog():
             currentpage = int(currentpage[0]) #整形为int，后面需要运算i+2
             #currenpage 搜出来结果是tuple，tuple第一个元素str才能被sub
     except:
+            print('logs not exist,start from chpt1 p1')
             currentpage = ''
             currentchpt = ''
     return currentchpt,currentpage
