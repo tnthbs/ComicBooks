@@ -4,7 +4,7 @@ from lxml import etree
 import time,random
 import re
 
-#import time
+
 def getChapterURL(mainURL):
     res= requests.get(mainURL)
     selector = etree.HTML(res.content)  #res.content对象才为HTML源码
@@ -41,30 +41,32 @@ def getContent(url,startpage):
     urlhead = re.search(r'http\S+/',url).group() #为构造下次循环网址准备 http://www.hheess.com//page86555/1.html?s=13 >
     #获得 http://www.hheess.com//page86555/
     url = urlhead+str(i)+r'.html?s=13' # http://www.hheess.com//page86555/+ i+ .html?s=13  构造start page
-
     
     r=requests.get(url) #获取第一次网页访问是否正常
     rcode = r.status_code
     
     while rcode == 200: #若返回值为200代表网页正常
-        try:
-            #'''第一次访问第一页，'''
-            '''update headless'''
-            chrome_options = webdriver.ChromeOptions()
-            chrome_options.add_argument('--headless')
-            #实例化Chrome driver
-            driver=webdriver.Chrome(options=chrome_options)
-            #driver = webdriver.Chrome()#网页含有js脚本，只能通过selenium 访问
-            '''update headless'''
-            driver.get(url)
-            source = driver.page_source #获取
-            picurl = re.findall('http://\S+.JPG',source) #匹配结果会得到两个，第一个为下一页网址，第二个为本页网址
-            maxpage = re.search('(\d+)</b>',source).groups()[0] #获取最大页码数
-            driver.close()
-            # or //*[@id="iBody"]/div[1]
-        except requests.exceptions.ConnectionError:
-            print('当前章节无法访问或出错')
-
+        trycount =1
+        while trycount <=3:
+            try:
+                #'''第一次访问第一页，'''
+                '''update headless'''
+                chrome_options = webdriver.ChromeOptions()
+                chrome_options.add_argument('--headless')
+                #实例化Chrome driver
+                driver=webdriver.Chrome(options=chrome_options)
+                #driver = webdriver.Chrome()#网页含有js脚本，只能通过selenium 访问
+                '''update headless'''
+                driver.get(url)
+                source = driver.page_source #获取
+                picurl = re.findall('http://\S+.JPG',source) #匹配结果会得到两个，第一个为下一页网址，第二个为本页网址
+                maxpage = re.search('(\d+)</b>',source).groups()[0] #获取最大页码数
+                driver.close()
+                # or //*[@id="iBody"]/div[1]
+                break
+            except requests.exceptions.ConnectionError:
+                print('第{}次 当前章节无法访问或出错'.format(str(i)))
+                trycount = trycount +1 #第一次失败，开始尝试第二次line50
             
         #'''下载当前页及下一页'''             
         for eachurl in picurl[::-1]:
@@ -72,18 +74,15 @@ def getContent(url,startpage):
             picname = re.search('-(\d+)',eachurl).group()
             file_name = chptname+picname+'.jpg' #拼接图片名
             print(file_name)
-
-            try:
+            try:#下载图片
                 pic = requests.get(eachurl)  
             except requests.exceptions.ConnectionError:
                 print('图片无法下载')
-
             #将图片存入本地
             fp = open(file_name,'wb')
             fp.write(pic.content) #写入图片
             fp.close()
             time.sleep(random.uniform(0.1, 2))#下完一章图片后随机睡眠，防爬虫           
-
         
         i=i+2 #在第一页中已获得第一页第二页的图片的网址，可以直接跳转到第三页        
         url = urlhead+str(i)+r'.html?s=13' # 构造下一页网址 http://www.hheess.com//page86555/+ i+ .html?s=13
@@ -99,13 +98,13 @@ def getContent(url,startpage):
         except Exception as e:
             rcode = 0  #若新构造的页面无法访问，则赋值0，退出while循环
             print(e)
-            
+
+
 def writelog(url):
     log='log.txt'
     with open (log,'w+',encoding='UTF-8') as writefile: #未指定编码方式时，保存和读取会出错。。。
         writefile.write(url)
-
-
+        
 
 def checklog():
     try:#若文件不存在时，不会报错
@@ -120,7 +119,8 @@ def checklog():
             currentpage = ''
             currentchpt = ''
     return currentchpt,currentpage
-   
+
+
 
 if __name__ == '__main__':
     mkpath= input('please input the storage path \n')
@@ -131,8 +131,6 @@ if __name__ == '__main__':
     #mainurl = r'http://www.hheess.com/manhua8612.html'
     chapterurl = getChapterURL(mainurl) #获取章节目录
     currentchpt,currentpage=checklog()
-
-
 
     if currentchpt !='': #如果已有下载记录
         getContent(currentchpt,currentpage) #从当前未下载完成的继续至下完本章节   
