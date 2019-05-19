@@ -68,11 +68,14 @@ def getContent(url,startpage):
                 print('Exception: ',e)
                 print('第{}次 当前章节无法访问或出错'.format(str(i)))
                 trycount = trycount +1 #第一次失败，开始尝试第二次line50
-            
+        
+        if i >int(maxpage):  #前一次获取maxpage ，maxpage为str，i为int
+            print('当前页数不存在，超出最大页数') #加入在最后一页出错时，log里面写入的待处理页面不存在，重选加载后无法读取图片信息，正则表达式无法匹配图片
+            break
         #'''下载当前页及下一页'''             
         for eachurl in picurl[::-1]:
             chptname = re.search('vol_\d+',eachurl).group()
-            picname = re.search('-(\d+)',eachurl).group()
+            picname = re.search('-(\d+)|_(\d+)_',eachurl).group()   #chpt1-36前page图片格式为vol_xx\xxx-0010-xxx,chpt37- page图片名称 为 vol_xx\xxx_0010_xx
             file_name = chptname+picname+'.jpg' #拼接图片名
             print(file_name)
             try:#下载图片
@@ -90,16 +93,11 @@ def getContent(url,startpage):
         url = urlhead+str(i)+r'.html?s=13' # 构造下一页网址 http://www.hheess.com//page86555/+ i+ .html?s=13
         writelog(url) #save next url needed processed
         
-        try:
-            r=requests.get(url)   #若能访问，则继续运行
-            rcode = r.status_code
-            #不存在的网页页可以被访问 http://www.hheess.com//page86555/+ 999+ .html?s=13
-            if i>int(maxpage): #如果构造的页面超过章节的最大页数，赋值rcode=0，停止循环
-                rcode = 0     
-                print('当前章节已下载完毕')
-        except Exception as e:
-            rcode = 0  #若新构造的页面无法访问，则赋值0，退出while循环
-            print(e)
+        #不存在的网页页可以被访问 http://www.hheess.com//page86555/+ 999+ .html?s=13
+        if i>int(maxpage): #如果构造的页面超过章节的最大页数，停止循环
+            rcode = 0     
+            print('当前章节已下载完毕')
+            break #如果下一页网址
 
 
 def writelog(url):
@@ -150,6 +148,7 @@ if __name__ == '__main__':
             #如正在下载vol_1,则是 chpapterurl[-1-1::-1],从倒数第二章节（chpt2）继续下载
             currentchpt = chpt
             currentpage = 1
+            print(currentchpt)
             getContent(currentchpt,currentpage)
     else:  #如果没有文件或没有下载记录，从第一章开始下
         for chpt in chapterurl[::-1]: #第一个元素为最新的一章，从第一章开始下载
