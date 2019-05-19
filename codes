@@ -64,7 +64,8 @@ def getContent(url,startpage):
                 driver.close()
                 # or //*[@id="iBody"]/div[1]
                 break
-            except requests.exceptions.ConnectionError:
+            except Exception as e:
+                print('Exception: ',e)
                 print('第{}次 当前章节无法访问或出错'.format(str(i)))
                 trycount = trycount +1 #第一次失败，开始尝试第二次line50
             
@@ -76,7 +77,8 @@ def getContent(url,startpage):
             print(file_name)
             try:#下载图片
                 pic = requests.get(eachurl)  
-            except requests.exceptions.ConnectionError:
+            except Exception as e:
+                print('Exception: ',e)
                 print('图片无法下载')
             #将图片存入本地
             fp = open(file_name,'wb')
@@ -123,12 +125,15 @@ def checklog():
 
 
 if __name__ == '__main__':
-    mkpath= input('please input the storage path \n')
-    #mkpath = r'F:\python_test'
+    #mkpath= input('please input the storage path \n')
+    mkpath = r'F:\python_test'
     mkdir(mkpath)
     os.chdir(mkpath) 
-    mainurl = input('please input the mainpage url \n')
-    #mainurl = r'http://www.hheess.com/manhua8612.html'
+    #mainurl = input('please input the mainpage url \n')
+    #mainurl = mainurl.strip()  
+    #if r'http://' not in mainurl: #输入网址时，可能只输入 www.xxxx.com ，程序只认 http://www.xxx.com
+        #mainurl = r'http://'+mainurl
+    mainurl = r'http://www.hheess.com/manhua8612.html'
     chapterurl = getChapterURL(mainurl) #获取章节目录
     currentchpt,currentpage=checklog()
 
